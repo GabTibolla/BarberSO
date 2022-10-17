@@ -4,18 +4,20 @@
 #include <pthread.h>
 #include <time.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 #define TRUE 1
 #define FALSE 0
 
 // Declaração de variáveis globais
 uint n, mincorte, maxcorte, min, max, cli;
-int contador = 0, verifica = 0, status[9], cadeira = 0, flag = FALSE, id=0;
+int contador = 0, verifica = 0, status[9];
 sem_t barb;
 
 // Declaração de funções
 void *barbeiro(void *qualquercoisa);
-void barbearia(int id);
+void barbearia_barb();
+void barbearia_clien();
 void *clientes(void *qualquercoisa);
 void finaliza_atendimento();
 void atendimento();
@@ -25,8 +27,8 @@ void chegadaClientes();
 int main(int argc, char * argv[]){
 
     // Declaração e inicialização de variáveis
-    int i;
-    pthread_t bar;
+    pthread_t bar;  // Thread Barbeiro
+    pthread_t clie; // Thread Clientes
     sem_init(&barb, 0, 1);
 
     // Testando se os parâmetros foram todos passados, caso não, mostra as condições e encerra a execução 
@@ -48,17 +50,14 @@ int main(int argc, char * argv[]){
     max = atoi(argv[5]);
     cli = atoi(argv[6]);
 
-    // Declarando a variável clientes conforme escolhida pelo usuário
-    pthread_t clie[cli];
-
     // Criando thread do barbeiro
     pthread_create(&bar, NULL, barbeiro, NULL);
 
     // Criando threads dos clientes
-    pthread_create(&clie[i], NULL, clientes, NULL);
+    pthread_create(&clie, NULL, clientes, NULL);
 
     // Sincronizando threads clientes
-    pthread_join(clie[i], NULL);
+    pthread_join(clie, NULL);
 
     // Sincronizando thread barbeiro
     pthread_join(bar, NULL);
@@ -70,55 +69,31 @@ int main(int argc, char * argv[]){
 void *barbeiro(void *qualquercoisa){
     printf("Barbeiro abriu a barbearia\n");
     printf("Ninguém para atender, barbeiro foi dormir\n");
-    barbearia(id[0] = 0)
+    barbearia_barb();
+
+    return NULL;
 }
 
 // Função para as threads clientes
 void *clientes(void *qualquercoisa){
-    verifica++;
-    barbearia(id[1] = 1);
+    barbearia_clien();
+    return NULL;
 }
 
-// Função para simular o funcionamento da barbearia
-void barbearia(int id[2]){
-    if (id[0] == 0){
-        printf("Barbeiro abriu a barbearia\n");
-    }
-    while (contador < cli){
-        if (verifica == 0 && contador != 0 && id[0] == 0){
-            printf("Ninguém para atender, barbeiro foi dormir\n");
-        }
-        chegadaClientes();
-        // Verifica se é o primeiro cliente
-        if (verifica == 1 && id[1] == 1){
-            sem_wait(&barb);
-            printf("Cliente chegou e foi atendido imediatamente\n");
-            printf("Barbeiro iniciou um atendimento")
-            atendimento();
-            finaliza_atendimento();
-        }
+// Função para simular o funcionamento da barbearia na visão do barbeiro
+void barbearia_barb(){
 
-        // Verifica se há cadeiras disponíveis
-        if (verifica <= n && id[1] == 1){
-            printf("Cliente chegou e sentou na cadeira de espera\n");
-            sem_wait(&barb);
-            printf("Barbeiro iniciou um atendimento\n")
-            atendimento();
-            finaliza_atendimento();
-        }
-        // Else caso não haja cadeiras disponíveis
-        else if (verifica > n && id[1] == 1){  
-            printf("Cliente chegou e foi embora\n");
-        }
-    }
+}
+
+// Função para simular o funcionamento da barbearia na visão do cliente
+void barbearia_clien(){
+
 }
 
 // Função para finalizar atendimento e restaurar algumas variáveis
 void finaliza_atendimento(){
     contador++;
-    verifica--;
     printf("Barbeiro finalizou um atendimento\n");
-    sem_post(&barb);
 }
 
 // Função para simular um tempo entre um atendimento e outro
