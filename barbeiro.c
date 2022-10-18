@@ -11,7 +11,7 @@
 
 // Declaração de variáveis globais
 uint n, mincorte, maxcorte, min, max, cli;
-int contador = 0, verifica = 0, status[9];
+int contador = 0, verifica = 0, status[9], flag = FALSE, conta = 0;
 sem_t barb;
 
 // Declaração de funções
@@ -82,18 +82,55 @@ void *clientes(void *qualquercoisa){
 
 // Função para simular o funcionamento da barbearia na visão do barbeiro
 void barbearia_barb(){
-
+    while (contador <= cli){
+        if (verifica == 0 && contador != 0 && flag){
+            printf("Ninguém para atender, barbeiro foi dormir\n");
+            sem_wait(&barb);
+            printf("Barbeiro iniciou o atendimento de um cliente\n");
+            flag = FALSE;
+            atendimento();
+            finaliza_atendimento();
+        }
+        else if (verifica == 1 && flag){
+            printf("Cliente chegou e foi atendido imediatamente\n");
+            sem_wait(&barb);
+            printf("Barbeiro iniciou o atendimento de um cliente\n");
+            flag = FALSE;
+            atendimento();
+            finaliza_atendimento();
+        }
+        else if (verifica > 1 && flag){
+            printf("Barbeiro iniciou o atendimento de um cliente\n");
+            sem_wait(&barb);
+            flag = FALSE;
+            atendimento();
+            finaliza_atendimento();
+        }
+    }
 }
 
 // Função para simular o funcionamento da barbearia na visão do cliente
 void barbearia_clien(){
-
+    while (conta < cli){
+        chegadaClientes();
+        verifica++;
+        if (verifica == n){
+            printf("Cliente chegou e foi embora sem atendimento\n");
+        }
+        else if (verifica < n){
+            printf("Cliente chegou e sentou em uma cadeira de espera\n");
+            flag = TRUE;
+        }
+    }
 }
 
 // Função para finalizar atendimento e restaurar algumas variáveis
 void finaliza_atendimento(){
-    contador++;
     printf("Barbeiro finalizou um atendimento\n");
+    verifica--;
+    conta++;
+    contador++;
+    sem_post(&barb);
 }
 
 // Função para simular um tempo entre um atendimento e outro
