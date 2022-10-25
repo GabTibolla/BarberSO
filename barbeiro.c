@@ -11,17 +11,18 @@
 
 // Declaração de variáveis globais
 uint n, mincorte, maxcorte, min, max, cli;
-int contador = 0, verifica = 0, status[9], flag = FALSE, conta = 0;
+int clientesAtendidos = 0, clientesSemEsperar = 0, qntDormiu = 0, foramEmbora = 0, flag=TRUE;
 sem_t barb;
 
+// variaveis compartilhadas
+int verifica = 0;
+
 // Declaração de funções
-void *barbeiro(void *qualquercoisa);
-void barbearia_barb();
-void barbearia_clien();
+
+void *barbearia(void *qualquercoisa);
 void *clientes(void *qualquercoisa);
-void finaliza_atendimento();
+void servico();
 void atendimento();
-void chegadaClientes();
 
 // Programa principal
 int main(int argc, char * argv[]){
@@ -51,7 +52,7 @@ int main(int argc, char * argv[]){
     cli = atoi(argv[6]);
 
     // Criando thread do barbeiro
-    pthread_create(&bar, NULL, barbeiro, NULL);
+    pthread_create(&bar, NULL, barbearia, NULL);
 
     // Criando threads dos clientes
     pthread_create(&clie, NULL, clientes, NULL);
@@ -62,85 +63,73 @@ int main(int argc, char * argv[]){
     // Sincronizando thread barbeiro
     pthread_join(bar, NULL);
 
+    // Exibindo resultados ao fim do programa
+    printf("Barbeiro fechou a barbearia\n");
+    printf("Clientes atendidos: %d\n", clientesAtendidos);
+    printf("Clientes atendidos sem esperar: %d\n", clientesSemEsperar);
+    printf("Clientes que foram embora sem serem atendidos: %d\n", foramEmbora);
+    printf("Quantidade de vezes que o barbeiro dormiu: %d\n", qntDormiu);
+
     return 0;
 }
 
-// Função para thread barbeiro
-void *barbeiro(void *qualquercoisa){
-    printf("Barbeiro abriu a barbearia\n");
-    printf("Ninguém para atender, barbeiro foi dormir\n");
-    barbearia_barb();
-
-    return NULL;
-}
-
-// Função para as threads clientes
-void *clientes(void *qualquercoisa){
-    barbearia_clien();
-    return NULL;
-}
-
-// Função para simular o funcionamento da barbearia na visão do barbeiro
-void barbearia_barb(){
-    while (contador <= cli){
-        if (verifica == 0 && contador != 0 && flag){
-            printf("Ninguém para atender, barbeiro foi dormir\n");
-            sem_wait(&barb);
-            printf("Barbeiro iniciou o atendimento de um cliente\n");
-            flag = FALSE;
-            atendimento();
-            finaliza_atendimento();
+// Função para as threads, simulando a barbearia
+void *barbearia(void *qualquercoisa){
+    while (clientesAtendidos < cli){
+        if (verifica == 1){
+            printf("Cliente chegou e foi atendido imeadiatamente\n");
+            clientesSemEsperar++;
+            servico();
         }
-        else if (verifica == 1 && flag){
-            printf("Cliente chegou e foi atendido imediatamente\n");
-            sem_wait(&barb);
-            printf("Barbeiro iniciou o atendimento de um cliente\n");
-            flag = FALSE;
-            atendimento();
-            finaliza_atendimento();
-        }
-        else if (verifica > 1 && flag){
-            printf("Barbeiro iniciou o atendimento de um cliente\n");
-            sem_wait(&barb);
-            flag = FALSE;
-            atendimento();
-            finaliza_atendimento();
-        }
-    }
-}
-
-// Função para simular o funcionamento da barbearia na visão do cliente
-void barbearia_clien(){
-    while (conta < cli){
-        chegadaClientes();
-        verifica++;
-        if (verifica == n){
-            printf("Cliente chegou e foi embora sem atendimento\n");
-        }
-        else if (verifica < n){
+        
+        else if (verifica > 1 && verifica < n){
             printf("Cliente chegou e sentou em uma cadeira de espera\n");
-            flag = TRUE;
+            servico();
+        }
+
+        else if ((verifica == 0 && clientesAtendidos) && flag){
+            flag = FALSE;
+            printf("Ninguém para atender, barbeiro foi dormir\n");
+            qntDormiu++;
         }
     }
+
+    return NULL;
 }
 
-// Função para finalizar atendimento e restaurar algumas variáveis
-void finaliza_atendimento(){
-    printf("Barbeiro finalizou um atendimento\n");
+// Função para as threads, simulando os clientes na barbearia
+void *clientes(void *qualquercoisa){
+    while (clientesAtendidos < cli){
+        srand(time(NULL));
+        //usleep((min + rand() % (max/2)));
+        sleep(1);
+        verifica++;
+
+        if (verifica == n){
+            printf("Cliente foi embora sem atendimento\n");
+            foramEmbora++;
+        }
+    }
+
+    return NULL;
+}
+
+// Simulando o atendimento do barbeiro
+void servico(){
+    sem_wait(&barb);
+    flag=TRUE;
+    printf("Barbeiro iniciou um atendimento de um cliente\n");
+    atendimento();
     verifica--;
-    conta++;
-    contador++;
+    clientesAtendidos++;
+    printf("Barbeiro finalizou o atendimento de um cliente\n");
     sem_post(&barb);
 }
+
 
 // Função para simular um tempo entre um atendimento e outro
 void atendimento(){
     srand(time(NULL));
-    usleep(mincorte + (rand() % (maxcorte/2)));
-}
-
-// Função para simular um tempo entre a chegada de um cliente e outro
-void chegadaClientes(){
-    srand(time(NULL));
-    usleep((min + rand() % (max/2)));
+    //usleep(mincorte + (rand() % (maxcorte/2)));
+    sleep(2);
 }
