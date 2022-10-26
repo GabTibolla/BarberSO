@@ -1,3 +1,11 @@
+/*
+@Barbeiro Adormecido
+
+- Juan Pinto Loureiro
+- Gabriel Matheus Tibolla
+*/
+
+
 // Inclusão de bibliotecas
 #include <stdio.h>
 #include <stdlib.h>
