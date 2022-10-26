@@ -122,8 +122,8 @@ void *clientes(void *qualquercoisa)
         // If para verificar o primeiro atendimento, no caso, o atendimento imediato
         else if (verifica == 1)
         {
-            flag = TRUE;
             printf("Cliente chegou e foi atendido imeadiatamente\n");
+            flag = TRUE;
             clientesSemEsperar++;
         }
         
