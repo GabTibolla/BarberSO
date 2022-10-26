@@ -3,6 +3,8 @@
 
 - Juan Pinto Loureiro
 - Gabriel Matheus Tibolla
+
+link git: https://github.com/GabTibolla/BarberSO
 */
 
 
