@@ -95,7 +95,7 @@ void *barbeiro(void *qualquercoisa)
 
     while ((verifica > 0) || (clientesAtendidos < cli))
     {
-        if (verifica > 0 && flag)  // Enquanto houver clientes, continuar atendendo
+        if (verifica > 0 && flag == TRUE)  // Enquanto houver clientes, continuar atendendo
             atendimento();
 
         else if (clientesAtendidos == cli)  // Caso o número de clientes atendidos seja satisfeito, encerra o laço while
