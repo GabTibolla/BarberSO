@@ -5,8 +5,9 @@
 - Gabriel Matheus Tibolla
 
 link git: https://github.com/GabTibolla/BarberSO
-*/
 
+Compilado com: gcc barbeiro.c -o barbeiro -lpthread -Wall
+*/
 
 // Inclusão de bibliotecas
 #include <stdio.h>
