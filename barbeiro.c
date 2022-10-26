@@ -6,34 +6,37 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+// Declaração de constantes usadas pela variável FLAG
 #define TRUE 1
 #define FALSE 0
 
 // Declaração de variáveis globais
 uint n, mincorte, maxcorte, min, max, cli;
-int clientesAtendidos = 0, clientesSemEsperar = 0, qntDormiu = 0, foramEmbora = 0, flag=TRUE;
+int clientesAtendidos = 0, clientesSemEsperar = 0, qntDormiu = 0, foramEmbora = 0, flag = TRUE, contador = 0;
 sem_t barb;
 
 // variaveis compartilhadas
-int verifica = 0;
+uint verifica = 0;
 
 // Declaração de funções
 
-void *barbearia(void *qualquercoisa);
+void *barbeiro(void *qualquercoisa);
 void *clientes(void *qualquercoisa);
 void atendimento();
 void chegadaClientes();
 
 // Programa principal
-int main(int argc, char * argv[]){
+int main(int argc, char *argv[])
+{
 
     // Declaração e inicialização de variáveis
     pthread_t bar;  // Thread Barbeiro
     pthread_t clie; // Thread Clientes
-    sem_init(&barb, 0, 1);
+    sem_init(&barb, 0, 1);  // Inicializando o semáforo
 
-    // Testando se os parâmetros foram todos passados, caso não, mostra as condições e encerra a execução 
-    if (argc != 7){
+    // Testando se os parâmetros foram todos passados, caso não, mostra as condições e encerra a execução
+    if (argc != 7)
+    {
         printf("N: a quantidade de cadeiras de espera disponíveis na barbearia sendo 10 > N > 2\n");
         printf("MINCORTE: tempo mínimo gasto num atendimento do barbeiro, sendo 10 < MINCORTE < 20\n");
         printf("MAXCORTE: tempo máximo gasto num atendimento do barbeiro, sendo MINCORTE < MAXCORTE < 40\n");
@@ -52,7 +55,7 @@ int main(int argc, char * argv[]){
     cli = atoi(argv[6]);
 
     // Criando thread do barbeiro
-    pthread_create(&bar, NULL, barbearia, NULL);
+    pthread_create(&bar, NULL, barbeiro, NULL);
 
     // Criando threads dos clientes
     pthread_create(&clie, NULL, clientes, NULL);
@@ -73,65 +76,100 @@ int main(int argc, char * argv[]){
     return 0;
 }
 
-// Função para as threads, simulando a barbearia
-void *barbearia(void *qualquercoisa){
+// Função para as threads, simulando a função do barbeiro: enquanto houver clientes, realizar o atendimento
+void *barbeiro(void *qualquercoisa)
+{
     printf("Barbeiro abriu a barbearia\n");
-    printf("Ninguém para atender, barbeiro foi dormir\n");
+    printf("Ninguém para atender, barbeiro foi dormir\n");  // Sempre que o barbeiro abre a barbearia, nunca haverá clientes, ou seja, ele irá dormir
+    flag = FALSE;
 
-    clientes(NULL);
+    while ((verifica > 0) || (clientesAtendidos < cli))
+    {
+        if (verifica > 0 && flag)  // Enquanto houver clientes, continuar atendendo
+            atendimento();
 
-    return NULL;
+        else if (clientesAtendidos == cli)  // Caso o número de clientes atendidos seja satisfeito, encerra o laço while
+            break;
+    }
 }
 
 // Função para as threads, simulando os clientes na barbearia
-void *clientes(void *qualquercoisa){
-    while (clientesAtendidos < cli){
+void *clientes(void *qualquercoisa)
+{
+    while (contador < cli)   // Esta verificação com um contador é para não chegar um número de clientes maior do que passado em CLI
+    {
         chegadaClientes();
 
-        sem_wait(&barb);
-        verifica++;
-        printf("passou  somando %dx\n", verifica);
-        sem_post(&barb);
+        // If para verificar se o barbeiro pode dormir, não será executado logo na primeira execução para não repetir o print
+        if (verifica == 0 && clientesAtendidos != 0)
+        {
+            printf("Ninguém para atender, barbeiro foi dormir\n");
+            qntDormiu++;
+        }
 
-        if (verifica == 1){
+        // If para verificar o primeiro atendimento, no caso, o atendimento imediato
+        else if (verifica == 1)
+        {
+            flag = TRUE;
             printf("Cliente chegou e foi atendido imeadiatamente\n");
             clientesSemEsperar++;
-            atendimento();
-            printf("Barbeiro finalizou o atendimento de um cliente\n");
         }
-
-        else if (verifica > 1 && verifica <= n+1){
+        
+        // Verifica se ainda há cadeiras disponíveis
+        else if (verifica > 1 && verifica <= n + 1)
+        {
             printf("Cliente chegou e sentou em uma cadeira de espera\n");
-            atendimento();
-            printf("Barbeiro finalizou o atendimento de um cliente\n");
         }
 
-        else if (verifica == n+2){
+        // Caso o número de clientes seja o mesmo número de clientes na barbearia (um em atendimento e mais n), cliente irá embora
+        else if (verifica == n + 2)
+        {
             printf("Cliente foi embora sem atendimento\n");
             foramEmbora++;
         }
 
-        if (verifica == 0 && clientesAtendidos != 0){
-            printf("Ninguém para atender, barbeiro foi dormir\n");
-            qntDormiu++;
-        }
+        // Incrementa variável "verifica" após tempo definido pela função chegadaClientes()
+        sem_wait(&barb);
+        verifica++;
+        contador++;
+        sem_post(&barb);
     }
 
     return NULL;
 }
 
 // Função para simular um tempo entre um atendimento e outro
-void atendimento(){
+void atendimento()
+{
+
+    // Inicio da zona crítica
     sem_wait(&barb);
-    printf("Barbeiro iniciou o atendimento de um cliente\n");
-    srand(time(NULL));
-    //usleep(mincorte + (rand() % (maxcorte/2)));
-    sleep(2);
+    if (flag)
+        printf("Barbeiro iniciou o atendimento de um cliente\n");
     sem_post(&barb);
+    // Fim da zona crítica
+
+    /*
+    Esse intervalo é realizado fora da zona crítica por ser em um intervalo de tempo,
+    o que possibilita a chegada de novos clientes, incrementando a variável "verifica",
+    que neste caso, é uma variável compartilhada
+    */
+
+    srand(time(NULL));
+    usleep(mincorte + (rand() % (maxcorte / 2)));
+
+    // Inicio da zona crítica
+    sem_wait(&barb);
+    printf("Barbeiro finalizou o atendimento de um cliente\n");
+    verifica--;          // Diminui o número de clientes na barbearia
+    clientesAtendidos++; // Incrementa variável dos clientes atendidos
+    sem_post(&barb);
+    // Fim da zona crítica
 }
 
-void chegadaClientes(){
+// Função para emular a chegada entre um cliente e outro
+void chegadaClientes()
+{
     srand(time(NULL));
-    //usleep((min + rand() % (max/2)));
-    sleep(1);
+    usleep((min + rand() % (max / 2)));
 }
