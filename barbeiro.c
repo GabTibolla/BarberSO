@@ -101,6 +101,8 @@ void *barbeiro(void *qualquercoisa)
         else if (clientesAtendidos == cli)  // Caso o número de clientes atendidos seja satisfeito, encerra o laço while
             break;
     }
+
+    return NULL;
 }
 
 // Função para as threads, simulando os clientes na barbearia
