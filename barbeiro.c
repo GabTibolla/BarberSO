@@ -156,7 +156,7 @@ void atendimento()
 
     // Inicio da zona crítica
     sem_wait(&barb);
-    if (flag)
+    if (flag == TRUE)
         printf("Barbeiro iniciou o atendimento de um cliente\n");
     sem_post(&barb);
     // Fim da zona crítica
