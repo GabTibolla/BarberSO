@@ -21,8 +21,8 @@ int verifica = 0;
 
 void *barbearia(void *qualquercoisa);
 void *clientes(void *qualquercoisa);
-void servico();
 void atendimento();
+void chegadaClientes();
 
 // Programa principal
 int main(int argc, char * argv[]){
@@ -75,24 +75,13 @@ int main(int argc, char * argv[]){
 
 // Função para as threads, simulando a barbearia
 void *barbearia(void *qualquercoisa){
-    while (clientesAtendidos < cli){
-        if (verifica == 1){
-            printf("Cliente chegou e foi atendido imeadiatamente\n");
-            clientesSemEsperar++;
-            servico();
-        }
-        
-        else if (verifica > 1 && verifica < n){
-            printf("Cliente chegou e sentou em uma cadeira de espera\n");
-            servico();
-        }
+    printf("Barbeiro abriu a barbearia\n");
+    printf("Ninguém para atender, barbeiro foi dormir\n");
 
-        else if ((verifica == 0 && clientesAtendidos) && flag){
-            flag = FALSE;
-            printf("Ninguém para atender, barbeiro foi dormir\n");
-            qntDormiu++;
-        }
-    }
+    do {
+        
+        
+    } while (clientesAtendidos < cli);
 
     return NULL;
 }
@@ -100,12 +89,28 @@ void *barbearia(void *qualquercoisa){
 // Função para as threads, simulando os clientes na barbearia
 void *clientes(void *qualquercoisa){
     while (clientesAtendidos < cli){
-        srand(time(NULL));
-        //usleep((min + rand() % (max/2)));
-        sleep(1);
-        verifica++;
+        chegadaClientes();
 
-        if (verifica == n){
+        sem_wait(&barb);
+        verifica++;
+        printf("passou  somando %dx\n", verifica);
+        sem_post(&barb);
+
+        if (verifica == 0 && clientesAtendidos != 0){
+            printf("Ninguém para atender, barbeiro foi dormir\n");
+            qntDormiu++;
+        }
+
+        else if (verifica == 1){
+            printf("Cliente chegou e foi atendido imeadiatamente\n");
+            clientesSemEsperar++;
+        }
+
+        else if (verifica > 1 && verifica <= n+1){
+            printf("Cliente chegou e sentou em uma cadeira de espera\n");
+        }
+
+        else if (verifica == n+2){
             printf("Cliente foi embora sem atendimento\n");
             foramEmbora++;
         }
@@ -114,22 +119,22 @@ void *clientes(void *qualquercoisa){
     return NULL;
 }
 
-// Simulando o atendimento do barbeiro
-void servico(){
-    sem_wait(&barb);
-    flag=TRUE;
-    printf("Barbeiro iniciou um atendimento de um cliente\n");
-    atendimento();
-    verifica--;
-    clientesAtendidos++;
-    printf("Barbeiro finalizou o atendimento de um cliente\n");
-    sem_post(&barb);
-}
-
-
 // Função para simular um tempo entre um atendimento e outro
 void atendimento(){
+    printf("Barbeiro iniciou o atendimento de um cliente\n");
     srand(time(NULL));
     //usleep(mincorte + (rand() % (maxcorte/2)));
     sleep(2);
+    sem_wait(&barb);
+    clientesAtendidos++;
+    verifica--;
+    printf("passou %dx\n", verifica);
+    sem_post(&barb);
+    printf("Barbeiro finalizou o atendimento de um cliente\n");
+}
+
+void chegadaClientes(){
+    srand(time(NULL));
+    //usleep((min + rand() % (max/2)));
+    sleep(1);
 }
