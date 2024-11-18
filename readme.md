@@ -1,3 +1,8 @@
+# Visualização
+Para melhor visualização, leia o [Barbeiro Adormecido](https://github.com/GabTibolla/BarberSO/blob/main/O%20Barbeiro%20Adormecido2022.pdf).
+
+# Descrição
+
 Implementação concorrente do Barbeiro Dorminhoco
 O problema do barbeiro adormecido pode ser descrito da seguinte forma: uma barbearia contém um
 (1) barbeiro, uma (1) cadeira para atendimento e N cadeiras de espera (N > 1). O barbeiro chega e abre a
